@@ -1,0 +1,9 @@
+{
+	"name": "tsdemotf",
+	"location": "westeurope",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "58656b31-0885-4ed9-bc6c-7558b37f4916",
+		"tenantId": "72f988bf-86f1-41af-91ab-2d7cd011db47"
+	}
+}
