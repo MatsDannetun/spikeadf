@@ -5,8 +5,8 @@
 		"annotations": [],
 		"type": "SqlServer",
 		"typeProperties": {
-			"connectionString": "integrated security=False;data source=source-spike-vm;initial catalog=master;user id=adminsa",
-			"encryptedCredential": "eyJDcmVkZW50aWFsSWQiOiJmNjQ0YWU3Yy1jYzNkLTRhMmYtYTdhOC0xZjgyNTQ1YTEwNzIiLCJWZXJzaW9uIjoiMi4wIiwiQ2xhc3NUeXBlIjoiTWljcm9zb2Z0LkRhdGFQcm94eS5Db3JlLkludGVyU2VydmljZURhdGFDb250cmFjdC5DcmVkZW50aWFsU1UwNkNZMTQifQ=="
+			"connectionString": "integrated security=False;data source=10.0.0.4;initial catalog=master;user id=adminsa",
+			"encryptedCredential": "eyJDcmVkZW50aWFsSWQiOiJiNjQ3YTdjYS1mMjM2LTQwZGEtYWE0OC02MzYwOTRlM2ZjNmMiLCJWZXJzaW9uIjoiMi4wIiwiQ2xhc3NUeXBlIjoiTWljcm9zb2Z0LkRhdGFQcm94eS5Db3JlLkludGVyU2VydmljZURhdGFDb250cmFjdC5DcmVkZW50aWFsU1UwNkNZMTQifQ=="
 		},
 		"connectVia": {
 			"referenceName": "IRhostdmz",
