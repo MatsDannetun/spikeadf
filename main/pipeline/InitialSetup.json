@@ -112,7 +112,7 @@
 				},
 				"userProperties": [],
 				"linkedServiceName": {
-					"referenceName": "DestinationSQL",
+					"referenceName": "DestinationUpdate",
 					"type": "LinkedServiceReference"
 				},
 				"typeProperties": {
