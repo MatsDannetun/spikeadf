@@ -4,7 +4,7 @@
 		"activities": [
 			{
 				"name": "Create Database",
-				"type": "Lookup",
+				"type": "Script",
 				"dependsOn": [],
 				"policy": {
 					"timeout": "7.00:00:00",
@@ -14,17 +14,17 @@
 					"secureInput": false
 				},
 				"userProperties": [],
+				"linkedServiceName": {
+					"referenceName": "SourceSQL",
+					"type": "LinkedServiceReference"
+				},
 				"typeProperties": {
-					"source": {
-						"type": "SqlServerSource",
-						"sqlReaderQuery": "USE MASTER;\nGO\nIF EXISTS (SELECT TOP 1 * FROM sys.databases WHERE name='SourceDB')\n    DROP DATABASE SourceDB;\nGO\nCREATE DATABASE [SourceDB]\n( NAME = source_data,\n    SIZE = 1000\n)\nLOG ON\n( NAME = source_log,\n    SIZE = 100MB )",
-						"queryTimeout": "02:00:00",
-						"partitionOption": "None"
-					},
-					"dataset": {
-						"referenceName": "SetupofSourcedatabase",
-						"type": "DatasetReference"
-					}
+					"scripts": [
+						{
+							"type": "Query",
+							"text": "USE MASTER;\nGO\nIF EXISTS (SELECT TOP 1 * FROM sys.databases WHERE name='SourceDB')\n    DROP DATABASE SourceDB;\nGO\nCREATE DATABASE [SourceDB]\n( NAME = source_data,\n    SIZE = 1000\n)\nLOG ON\n( NAME = source_log,\n    SIZE = 100MB\n     );"
+						}
+					]
 				}
 			}
 		],
