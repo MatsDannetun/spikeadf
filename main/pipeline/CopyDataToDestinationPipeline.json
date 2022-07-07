@@ -98,6 +98,38 @@
 						"type": "DatasetReference"
 					}
 				]
+			},
+			{
+				"name": "Clean Data",
+				"type": "Script",
+				"dependsOn": [
+					{
+						"activity": "Copy data to destination",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"linkedServiceName": {
+					"referenceName": "DestinationSQL",
+					"type": "LinkedServiceReference"
+				},
+				"typeProperties": {
+					"scripts": [
+						{
+							"type": "Query",
+							"text": "INSERT INTO [cleandata_tb] (LRID,Machine,Measurement,[Value],[Timestamp])\nSELECT \n LRID,\n CASE \n    WHEN Mid=100 THEN 'Machine X1'\n    WHEN Mid=200 THEN 'Machine X2'\n    WHEN Mid=300 THEN 'Machine X3'\n    ELSE 'UNKNOWED'\n END as [Machine],\n  CASE \n    WHEN ctype=400 THEN 'Pressure Pa'\n    WHEN ctype=500 THEN 'Temperature °C'\n    WHEN ctype=600 THEN 'Dosage ml'\n    ELSE 'UNKNOWED'\n END as [Measurement],\n cvalue as [Value],\n tstamp as [Timestamp]\nFROM raw_tb \nSET IDENTITY_INSERT cleandata_tb OFF"
+						}
+					]
+				}
 			}
 		],
 		"annotations": []
