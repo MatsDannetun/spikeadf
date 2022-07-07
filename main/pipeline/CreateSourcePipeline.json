@@ -22,7 +22,7 @@
 					"scripts": [
 						{
 							"type": "Query",
-							"text": "USE MASTER\nGO\nIF EXISTS (SELECT 1 FROM sys.databases WHERE name='SourceDB')\n    DROP DATABASE SourceDB\nGO\nCREATE DATABASE [SourceDB]"
+							"text": "USE master\n\nIF EXISTS (SELECT 1 FROM master.sys.databases WHERE name='SourceDB')\n    DROP DATABASE SourceDB\n\nCREATE DATABASE [SourceDB]"
 						}
 					]
 				}
