@@ -1,0 +1,6 @@
+{
+	"name": "CopyDataToDestinationPipeline",
+	"properties": {
+		"annotations": []
+	}
+}
