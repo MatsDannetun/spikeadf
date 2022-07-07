@@ -1,5 +1,5 @@
 {
-	"name": "CreateSource",
+	"name": "CreateSourcePipeline",
 	"properties": {
 		"activities": [
 			{
