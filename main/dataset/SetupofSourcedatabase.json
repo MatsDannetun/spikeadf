@@ -1,0 +1,12 @@
+{
+	"name": "SetupofSourcedatabase",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "SourceSQL",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "SqlServerTable",
+		"schema": []
+	}
+}
