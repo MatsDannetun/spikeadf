@@ -1,0 +1,33 @@
+{
+	"name": "pipeline1",
+	"properties": {
+		"activities": [
+			{
+				"name": "Create Database",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlServerSource",
+						"sqlReaderQuery": "USE MASTER;\nGO\nIF EXISTS (SELECT TOP 1 * FROM sys.databases WHERE name='SourceDB')\n    DROP DATABASE SourceDB;\nGO\nCREATE DATABASE [SourceDB]\n( NAME = source_data,\n    SIZE = 1000\n)\nLOG ON\n( NAME = source_log,\n    SIZE = 100MB )",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "SetupofSourcedatabase",
+						"type": "DatasetReference"
+					}
+				}
+			}
+		],
+		"annotations": []
+	}
+}
