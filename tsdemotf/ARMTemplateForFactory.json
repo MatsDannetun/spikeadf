@@ -1,0 +1,484 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "tsdemotf"
+		},
+		"SourceSQL_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'SourceSQL'"
+		},
+		"SourceExtractLS_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'SourceExtractLS'"
+		},
+		"DestinationUpdate_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'DestinationUpdate'"
+		},
+		"DestinationSQL_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'DestinationSQL'"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/IRhostdmz')]",
+			"type": "Microsoft.DataFactory/factories/integrationRuntimes",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "SelfHosted",
+				"typeProperties": {}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/SourceSQL')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "SqlServer",
+				"typeProperties": {
+					"connectionString": "[parameters('SourceSQL_connectionString')]"
+				},
+				"connectVia": {
+					"referenceName": "IRhostdmz",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/integrationRuntimes/IRhostdmz')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/SetupofSourcedatabase')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "SourceSQL",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "SqlServerTable",
+				"schema": [],
+				"typeProperties": {}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/SourceSQL')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/InitialSetup')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Create Database Source",
+						"type": "Script",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"linkedServiceName": {
+							"referenceName": "SourceSQL",
+							"type": "LinkedServiceReference"
+						},
+						"typeProperties": {
+							"scripts": [
+								{
+									"type": "Query",
+									"text": "USE master\n\nIF EXISTS (SELECT 1 FROM master.sys.databases WHERE name='SourceDB')\n    DROP DATABASE SourceDB\n\nCREATE DATABASE [SourceDB]"
+								}
+							]
+						}
+					},
+					{
+						"name": "Create tables Source",
+						"description": "",
+						"type": "Script",
+						"dependsOn": [
+							{
+								"activity": "Create Database Source",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"linkedServiceName": {
+							"referenceName": "SourceSQL",
+							"type": "LinkedServiceReference"
+						},
+						"typeProperties": {
+							"scripts": [
+								{
+									"type": "Query",
+									"text": "USE SourceDB\n\nIF EXISTS (SELECT 1 FROM sys.tables WHERE name='NEO_tb') \n    DROP TABLE dbo.NEO_tb;\n\n--Create table NEO( i int);\n\nWITH Ten(N) AS \n(\n    SELECT 1 UNION ALL SELECT 1 UNION ALL SELECT 1 UNION ALL \n    SELECT 1 UNION ALL SELECT 1 UNION ALL SELECT 1 UNION ALL \n    SELECT 1 UNION ALL SELECT 1 UNION ALL SELECT 1 UNION ALL SELECT 1\n)   \nSELECT\n    id = CONVERT(integer, ROW_NUMBER() OVER (ORDER BY T10.N))\n    , (CAST(RAND(CHECKSUM(NEWID()))*3 as int) +1)*100 as MId\nINTO dbo.NEO_tb \nFROM Ten AS T10\nCROSS JOIN Ten T100\nCROSS JOIN Ten T1000\nCROSS JOIN Ten T10000\nCROSS JOIN Ten T100000\nCROSS JOIN Ten T1000000;\n\nCREATE CLUSTERED INDEX CIX_id ON dbo.NEO_tb (id);\n\n\nDECLARE @DateStart DATETIME = '2022-01-01 07:00:00'\n\nSELECT\n\n    A.Mid\n    --, (CAST(RAND(CHECKSUM(NEWID()))*3 as int) +1)*100 as id\n    , CASE \n        WHEN A.MId=100 THEN 400 \n        WHEN A.MId=200 THEN 500\n        WHEN A.MId=300 THEN 600 \n        ELSE 0\n     END as ctype\n    , CASE \n        WHEN A.MId=100 THEN CAST(RAND(CHECKSUM(NEWID()))*10.8 as real) +15 \n        WHEN A.MId=200 THEN CAST(RAND(CHECKSUM(NEWID()))*10.8 as real) +5 \n        WHEN A.MId=300 THEN CAST(RAND(CHECKSUM(NEWID()))*10.1 as real) +2 \n        ELSE 0\n     END as cvalue\n    , DATEADD(SECOND, id, @DateStart) as tstamp INTO source_tb\nFROM NEO_tb AS A \n\nIF EXISTS (SELECT 1 FROM sys.tables WHERE name='lookupvalues_tb') \n    DROP TABLE dbo.lookupvalues_tb;\n\nCREATE TABLE lookupvalues_tb\n(\n    lid int IDENTITY(1,1),\n    CodeId int,\n    CodeName varchar(50),\n    CodeType varchar(50),\n    [description] varchar(500)\n);\n\nINSERT INTO lookupvalues_tb(CodeId,CodeName,CodeType,[description]) VALUES (100,'Machine X1','Machine ID','Machine X1 is the markets finest.. ');\nINSERT INTO lookupvalues_tb(CodeId,CodeName,CodeType,[description]) VALUES (200,'Machine X2','Machine ID','Machine X2 is the markets finest... ');\nINSERT INTO lookupvalues_tb(CodeId,CodeName,CodeType,[description]) VALUES (300,'Machine X3','Machine ID','Machine X3 is not the markets finest... ');\n--\nINSERT INTO lookupvalues_tb(CodeId,CodeName,CodeType,[description]) VALUES (400,'Pressure','Pressure in Bar',' based on N/m2, (symbal: Pa)... ');\nINSERT INTO lookupvalues_tb(CodeId,CodeName,CodeType,[description]) VALUES (500,'Temperature','temperature in Celsius',' The degree Celsius (symbol: °C)...  ');\nINSERT INTO lookupvalues_tb(CodeId,CodeName,CodeType,[description]) VALUES (600,'Dosage','Dosage in milliters',' Milliliter (symbal: ml) to a liter is 0.001...  ');\n\n"
+								}
+							]
+						}
+					},
+					{
+						"name": "Create Database Destination",
+						"type": "Script",
+						"dependsOn": [
+							{
+								"activity": "Create tables Source",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"linkedServiceName": {
+							"referenceName": "DestinationUpdate",
+							"type": "LinkedServiceReference"
+						},
+						"typeProperties": {
+							"scripts": [
+								{
+									"type": "Query",
+									"text": "IF EXISTS (SELECT 1 FROM master.sys.databases WHERE name='DestinationDB')\r\n    DROP DATABASE DestinationDB\r\n\r\nCREATE DATABASE [DestinationDB]"
+								}
+							]
+						}
+					},
+					{
+						"name": "Create tables Destination",
+						"type": "Script",
+						"dependsOn": [
+							{
+								"activity": "Create Database Destination",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"linkedServiceName": {
+							"referenceName": "DestinationSQL",
+							"type": "LinkedServiceReference"
+						},
+						"typeProperties": {
+							"scripts": [
+								{
+									"type": "Query",
+									"text": "CREATE TABLE [dbo].[raw_tb](\r\n    LRID int IDENTITY (1,1),\r\n\t[Mid] [int] NULL,\r\n\t[ctype] [int] NOT NULL,\r\n\t[cvalue] [real] NULL,\r\n\t[tstamp] [datetime] NULL\r\n) ON [PRIMARY] ; \r\nCREATE CLUSTERED INDEX CIX_LRID ON dbo.raw_tb (LRID);\r\n\r\nCREATE TABLE [DestinationDB].[dbo].[cleandata_tb](\r\n\t[LRID] [int] IDENTITY(1,1) NOT NULL,\r\n\t[Machine] [varchar](10) NOT NULL,\r\n\t[Measurement] [varchar](14) NOT NULL,\r\n\t[Value] [real] NULL,\r\n\t[Timestamp] [datetime] NULL\r\n) ON [PRIMARY]; \r\n\r\nCREATE CLUSTERED COLUMNSTORE INDEX CSIX_lrid ON dbo.cleandata_tb ;\r\n\r\nCREATE TABLE dbo.lookupvalues_tb\r\n(\r\n    lid int IDENTITY(1,1),\r\n    CodeId int,\r\n    CodeName varchar(50),\r\n    CodeType varchar(50),\r\n    [description] varchar(500)\r\n);\r\n\r\nINSERT INTO dbo.lookupvalues_tb(CodeId,CodeName,CodeType,[description]) VALUES (100,'Machine X1','Machine ID','Machine X1 is the markets finest.. ');\r\nINSERT INTO dbo.lookupvalues_tb(CodeId,CodeName,CodeType,[description]) VALUES (200,'Machine X2','Machine ID','Machine X2 is the markets finest... ');\r\nINSERT INTO dbo.lookupvalues_tb(CodeId,CodeName,CodeType,[description]) VALUES (300,'Machine X3','Machine ID','Machine X3 is not the markets finest... ');\r\n--\r\nINSERT INTO dbo.lookupvalues_tb(CodeId,CodeName,CodeType,[description]) VALUES (400,'Pressure','Pressure in Bar',' based on N/m2, (symbal: Pa)... ');\r\nINSERT INTO dbo.lookupvalues_tb(CodeId,CodeName,CodeType,[description]) VALUES (500,'Temperature','temperature in Celsius',' The degree Celsius (symbol: °C)...  ');\r\nINSERT INTO dbo.lookupvalues_tb(CodeId,CodeName,CodeType,[description]) VALUES (600,'Dosage','Dosage in milliters',' Milliliter (symbal: ml) to a liter is 0.001...  ');\r\n"
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/SourceSQL')]",
+				"[concat(variables('factoryId'), '/linkedServices/DestinationUpdate')]",
+				"[concat(variables('factoryId'), '/linkedServices/DestinationSQL')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/SourceExtract')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "SourceExtractLS",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "SqlServerTable",
+				"schema": [],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "source_tb"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/SourceExtractLS')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/SourceExtractLS')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "SqlServer",
+				"typeProperties": {
+					"connectionString": "[parameters('SourceExtractLS_connectionString')]"
+				},
+				"connectVia": {
+					"referenceName": "IRhostdmz",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/integrationRuntimes/IRhostdmz')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/CopyDataToDestinationPipeline')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Copy data to destination",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "SqlServerSource",
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"sink": {
+								"type": "AzureSqlSink",
+								"writeBehavior": "insert",
+								"sqlWriterUseTableLock": true,
+								"disableMetricsCollection": false
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "Mid",
+											"type": "Int32",
+											"physicalType": "int"
+										},
+										"sink": {
+											"name": "Mid",
+											"type": "Int32",
+											"physicalType": "int"
+										}
+									},
+									{
+										"source": {
+											"name": "ctype",
+											"type": "Int32",
+											"physicalType": "int"
+										},
+										"sink": {
+											"name": "ctype",
+											"type": "Int32",
+											"physicalType": "int"
+										}
+									},
+									{
+										"source": {
+											"name": "cvalue",
+											"type": "Single",
+											"physicalType": "real"
+										},
+										"sink": {
+											"name": "cvalue",
+											"type": "Single",
+											"physicalType": "real"
+										}
+									},
+									{
+										"source": {
+											"name": "tstamp",
+											"type": "DateTime",
+											"physicalType": "datetime"
+										},
+										"sink": {
+											"name": "tstamp",
+											"type": "DateTime",
+											"physicalType": "datetime"
+										}
+									}
+								],
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "SourceExtract",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "DestinationDS",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					},
+					{
+						"name": "Clean Data",
+						"type": "Script",
+						"dependsOn": [
+							{
+								"activity": "Copy data to destination",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"linkedServiceName": {
+							"referenceName": "DestinationSQL",
+							"type": "LinkedServiceReference"
+						},
+						"typeProperties": {
+							"scripts": [
+								{
+									"type": "Query",
+									"text": "SET IDENTITY_INSERT cleandata_tb ON\nINSERT INTO [cleandata_tb] (LRID,Machine,Measurement,[Value],[Timestamp])\nSELECT \n LRID,\n CASE \n    WHEN Mid=100 THEN 'Machine X1'\n    WHEN Mid=200 THEN 'Machine X2'\n    WHEN Mid=300 THEN 'Machine X3'\n    ELSE 'UNKNOWED'\n END as [Machine],\n  CASE \n    WHEN ctype=400 THEN 'Pressure Pa'\n    WHEN ctype=500 THEN 'Temperature °C'\n    WHEN ctype=600 THEN 'Dosage ml'\n    ELSE 'UNKNOWED'\n END as [Measurement],\n cvalue as [Value],\n tstamp as [Timestamp]\nFROM raw_tb \nSET IDENTITY_INSERT cleandata_tb OFF"
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/SourceExtract')]",
+				"[concat(variables('factoryId'), '/datasets/DestinationDS')]",
+				"[concat(variables('factoryId'), '/linkedServices/DestinationSQL')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DestinationDS')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "DestinationSQL",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "LRID",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "Mid",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "ctype",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "cvalue",
+						"type": "real",
+						"precision": 7
+					},
+					{
+						"name": "tstamp",
+						"type": "datetime",
+						"precision": 23,
+						"scale": 3
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "raw_tb"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/DestinationSQL')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DestinationUpdate')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureSqlDatabase",
+				"typeProperties": {
+					"connectionString": "[parameters('DestinationUpdate_connectionString')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DestinationSQL')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureSqlDatabase",
+				"typeProperties": {
+					"connectionString": "[parameters('DestinationSQL_connectionString')]"
+				}
+			},
+			"dependsOn": []
+		}
+	]
+}
