@@ -33,68 +33,49 @@
 							{
 								"source": {
 									"name": "Mid",
-									"type": "Int32",
-									"physicalType": "int"
+									"type": "Int32"
 								},
 								"sink": {
 									"name": "Mid",
-									"type": "Int32",
-									"physicalType": "int"
+									"type": "Int32"
 								}
 							},
 							{
 								"source": {
 									"name": "ctype",
-									"type": "Int32",
-									"physicalType": "int"
+									"type": "Int32"
 								},
 								"sink": {
 									"name": "ctype",
-									"type": "Int32",
-									"physicalType": "int"
+									"type": "Int32"
 								}
 							},
 							{
 								"source": {
 									"name": "cvalue",
-									"type": "Single",
-									"physicalType": "real"
+									"type": "Single"
 								},
 								"sink": {
 									"name": "cvalue",
-									"type": "Single",
-									"physicalType": "real"
+									"type": "Single"
 								}
 							},
 							{
 								"source": {
 									"name": "tstamp",
-									"type": "DateTime",
-									"physicalType": "datetime"
+									"type": "DateTime"
 								},
 								"sink": {
 									"name": "tstamp",
-									"type": "DateTime",
-									"physicalType": "datetime"
+									"type": "DateTime"
 								}
 							}
-						],
-						"typeConversion": true,
-						"typeConversionSettings": {
-							"allowDataTruncation": true,
-							"treatBooleanAsNumber": false
-						}
+						]
 					}
 				},
 				"inputs": [
 					{
 						"referenceName": "SourceExtract",
-						"type": "DatasetReference"
-					}
-				],
-				"outputs": [
-					{
-						"referenceName": "DestinationDS",
 						"type": "DatasetReference"
 					}
 				]
