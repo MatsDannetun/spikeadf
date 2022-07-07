@@ -1,0 +1,16 @@
+{
+	"name": "SourceExtractLS",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "SqlServer",
+		"typeProperties": {
+			"connectionString": "integrated security=False;data source=10.0.0.4;initial catalog=SourceDB;user id=adminsa",
+			"encryptedCredential": "eyJDcmVkZW50aWFsSWQiOiIxM2ZkYTI1OS02YTIzLTRiYjktOTliNC1jMjBhMTQ4M2RiZjkiLCJWZXJzaW9uIjoiMi4wIiwiQ2xhc3NUeXBlIjoiTWljcm9zb2Z0LkRhdGFQcm94eS5Db3JlLkludGVyU2VydmljZURhdGFDb250cmFjdC5DcmVkZW50aWFsU1UwNkNZMTQifQ=="
+		},
+		"connectVia": {
+			"referenceName": "IRhostdmz",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}
