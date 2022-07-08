@@ -1,0 +1,43 @@
+{
+	"name": "ExtraSourceDS",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ExtraSourceLS",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "LRID",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "Mid",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "ctype",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "cvalue",
+				"type": "real",
+				"precision": 7
+			},
+			{
+				"name": "tstamp",
+				"type": "datetime",
+				"precision": 23,
+				"scale": 3
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "raw_tb"
+		}
+	}
+}
